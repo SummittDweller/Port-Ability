@@ -18,10 +18,10 @@ entryPoint = "https"
 onHostRule = true
 onDemand = false
 [[acme.domains]]
-  main = "*.summittservices.com"
+  main = "summittservices.com"
   sans = ["admin.summittservices.com", "traefik.summittservices.com", "portainer.summittservices.com", "ohscribe.summittservices.com"]
 [[acme.domains]]
-  main = "*.horsetrailslesstraveled.com"
+  main = "horsetrailslesstraveled.com"
   sans = ["horsetrailslesstraveled.com", "www.horsetrailslesstraveled.com"]
 [[acme.domains]]
   main = "compassroseband.net"
@@ -30,7 +30,7 @@ onDemand = false
 [[acme.domains]]
   main = "thecompassroseband.com"
 [[acme.domains]]
-  main = "wieting.tamatoledo.com" 
+  main = "wieting.tamatoledo.com"
 [acme.httpChallenge]
 entryPoint = "http"
 delayBeforeCheck = 0
