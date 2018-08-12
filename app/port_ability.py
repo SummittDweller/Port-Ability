@@ -155,9 +155,9 @@ def do_fix_permissions(target):
     # Specials... not from https://www.drupal.org/node/244924
 
     for name in dirs:
-      if name == 'js':
+      if name in ['js', 'ctools', 'css'] :
         p = os.path.join(root, name)
-        debug("Changing permissions of 'js' directory '{0}' to 'rwxrwxrwx'.".format(p))
+        debug("Changing permissions of '{0}' directory to 'rwxrwxrwx'.".format(p))
         os.chmod(p, 0o777)
 
 #--------------------------------
