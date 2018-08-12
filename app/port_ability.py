@@ -55,10 +55,9 @@ from colorama import init, Fore, Back, Style
 # Note: The following is based largely on the guidance and
 # script found at https://www.drupal.org/node/244924
 
-def do_fix_permissions(target):
+def do_fix_permissions(target, target_env):
   global base_dir
 
-  target_env = master_parser(target)
   try:
     target_env['DRUPAL_VERSION']
   except KeyError:
@@ -68,10 +67,11 @@ def do_fix_permissions(target):
     unexpected()
     raise
 
-  drupal_path = target_env['STACKS'] + '/' + target_env['PROJECT_PATH'] +  '/html/web'
+  drupal_path = target_env['STACKS'] + '/' + target_env['PROJECT_PATH'] + '/html/web'
   core = drupal_path + '/core/modules/system/system.module'
   modules = drupal_path + '/modules/system/system.module'
   sites = drupal_path + '/sites'
+  private = target_env['STACKS'] + '/' + target_env['PROJECT_PATH'] + '/html/private'
 
   if not os.path.isdir(drupal_path) and not os.path.isfile(core) and not os.path.isfile(modules):
     red("ERROR: Please provide a valid Drupal path.")
@@ -102,27 +102,50 @@ def do_fix_permissions(target):
     for name in dirs:
       p = os.path.join(root, name)
       # debug("Changing ownership of directory '{0}'.".format(p))
-      os.chown(p, uid, gid)
+      try:
+        os.chown(p, uid, gid)
+      except PermissionError:
+        yellow("Could not change ownership of directory '{0}'.".format(p))
+      except:
+        unexpected( )
+        raise
+
     for name in files:
       p = os.path.join(root, name)
       # debug("Changing ownership of file '{0}.".format(p))
-      os.chown(p, uid, gid)
+      try:
+        os.chown(p, uid, gid)
+      except PermissionError:
+        yellow("Could not change ownership of file '{0}'.".format(p))
+      except:
+        unexpected( )
+        raise
 
   normal("Changing permissions of all directories inside '{0}' to 'rwxr-xr-x'.".format(drupal_path))   # was rwxr-xr-x
   for root, dirs, files in os.walk(drupal_path):
     for name in dirs:
       p = os.path.join(root, name)
       debug("Changing permissions of directory '{0}' to 'rwxr-xr-x'.".format(p))
-      os.chmod(p, 0o755)
+      try:
+        os.chmod(p, 0o755)
+      except PermissionError:
+        yellow("Could not change permissions of directory '{0}'.".format(p))
+      except:
+        unexpected( )
+        raise
 
   normal("Changing permissions of all files inside '{0}' to 'rw-r--r--'.".format(drupal_path))   # was rw-r-----
   for root, dirs, files in os.walk(drupal_path):
     for name in files:
       p = os.path.join(root, name)
       debug("Changing permissions of file '{0}' to 'rw-r--r--'.".format(p))
-      os.chmod(p, 0o644)
-
-  # os.chdir(sites)
+      try:
+        os.chmod(p, 0o644)
+      except PermissionError:
+        yellow("Could not change permissions of file '{0}'.".format(p))
+      except:
+        unexpected( )
+        raise
 
   # Find all */files directories under sites...
   filesDirs = []
@@ -135,7 +158,13 @@ def do_fix_permissions(target):
         p = os.path.join(root, name)
         filesDirs.append(p)
         debug("Changing permissions of directory '{0}' to 'rwxrwxrwx'.".format(p))
-        os.chmod(p, 0o777)
+        try:
+          os.chmod(p, 0o777)
+        except PermissionError:
+          yellow("Could not change permissions of directory '{0}'.".format(p))
+        except:
+          unexpected( )
+          raise
 
   # Loop on each */files directory under sites...
   for d in filesDirs:
@@ -144,7 +173,28 @@ def do_fix_permissions(target):
       for name in files:
         p = os.path.join(root, name)
         debug("Changing permissions of file '{0}' to 'rw-rw-r--'.".format(p))
-        os.chmod(p, 0o664)
+        try:
+          os.chmod(p, 0o664)
+        except PermissionError:
+          yellow("Could not change permissions of file '{0}'.".format(p))
+        except:
+          unexpected( )
+          raise
+
+    # Specials... not from https://www.drupal.org/node/244924
+
+      for name in dirs:
+        if name in ['js', 'ctools', 'css'] :
+          p = os.path.join(root, name)
+          debug("Changing permissions of directory '{0}' to 'rwxrwxrwx'.".format(p))
+          try:
+            os.chmod(p, 0o777)
+          except PermissionError:
+            yellow("Could not change permissions of file '{0}'.".format(p))
+          except:
+            unexpected( )
+            raise
+
     # normal("Changing permissions of all directories inside '{0}' to 'rwxrwx---'.".format(d))  # was rwxrwxrwx
     # for root, dirs, files in os.walk(d):
     #   for name in dirs:
@@ -152,19 +202,21 @@ def do_fix_permissions(target):
     #     debug("Changing permissions of directory '{0}' to 'rwxrwx---'.".format(p))
     #     os.chmod(p, 0o770)
 
-    # Specials... not from https://www.drupal.org/node/244924
+  # Set 'private' directory permissions too
+  debug("Changing permissions of directory '{0}' to 'rwxrwxrwx'.".format(private))
+  try:
+    os.chmod(private, 0o777)
+  except PermissionError:
+    yellow("Could not change permissions of directory '{0}'.".format(private))
+  except:
+    unexpected( )
+    raise
 
-    for name in dirs:
-      if name in ['js', 'ctools', 'css'] :
-        p = os.path.join(root, name)
-        debug("Changing permissions of '{0}' directory to 'rwxrwxrwx'.".format(p))
-        os.chmod(p, 0o777)
 
 #--------------------------------
-def do_test(target):
+def do_test(target, target_env):
   global client, do_not_repeat
 
-  target_env = master_parser(target)
   containers = target_env['CONTAINERS'].strip("'").split(' ')
 
   if not do_not_repeat:
@@ -187,7 +239,7 @@ def do_test(target):
       raise
 
 #--------------------------------
-def do_stop(target):
+def do_stop(target, target_env):
   global client, do_not_repeat
 
   # If portainer specified, stop Traefik too
@@ -206,7 +258,6 @@ def do_stop(target):
       raise
 
   # Now, stop the target
-  target_env = master_parser(target)
   remove_containers(target, target_env)
 
   # And prune the networks
@@ -214,17 +265,14 @@ def do_stop(target):
   green("Unused Docker networks have been pruned.")
 
 #--------------------------------
-def do_restart(target):
-  target_env = master_parser(target)
+def do_restart(target, target_env):
   remove_containers(target, target_env)
   restart_containers(target, target_env)
   pass
 
 #--------------------------------
-def do_drupal_backup(target):
+def do_drupal_backup(target, target_env):
   global client, base_dir
-
-  target_env = master_parser(target)
 
   # Determine the target's Drupal version.  If None, there's no backup to be done.
   try:
@@ -652,23 +700,29 @@ if __name__ == "__main__":
 
   # Loop through the specified targets...
   for target in args.targets:
-    green("Launching a '{0}' action for target '{1}'.".format(args.action[0], target))
+    target_env = master_parser(target)
+
+    if target_env['BLOCK_THIS_STACK'] in ['1', 'True', 'TRUE', 'true']:
+      red("The '{0}' stack is BLOCKED from deployment on host '{1}'.  Nothing to do here.  Moving on.".format(target, host))
+      continue
+    else:
+      green("Launching a '{0}' action for target '{1}'.".format(args.action[0], target))
 
     if args.action[0] == 'test':
       verbose = max(verbose, 1)     # ok, we really should see something
-      do_test(target)
+      do_test(target, target_env)
 
     if args.action[0] == 'stop':
-      do_stop(target)
+      do_stop(target, target_env)
 
     if args.action[0] == 'restart':
-      do_restart(target)
+      do_restart(target, target_env)
 
     if args.action[0] == 'fix-permissions':
-      do_fix_permissions(target)
+      do_fix_permissions(target, target_env)
 
     if args.action[0] == 'backup':
-      do_drupal_backup(target)
+      do_drupal_backup(target, target_env)
 
   # All done.  Set working directory back to original.
   os.chdir(cwd)
