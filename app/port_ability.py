@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #--------------------------------------------------------------------------------------
-# port_ability.py      Modified: 2018-08-10 05:59:38
+# port_ability.py      Modified: 2018-08-11 16:15:38
 #
 # If Pythonized...
 #
@@ -57,7 +57,7 @@ from colorama import init, Fore, Back, Style
 
 def do_fix_permissions(target):
   global base_dir
-  
+
   target_env = master_parser(target)
   try:
     target_env['DRUPAL_VERSION']
@@ -67,16 +67,16 @@ def do_fix_permissions(target):
   except:
     unexpected()
     raise
-  
+
   drupal_path = target_env['STACKS'] + '/' + target_env['PROJECT_PATH'] +  '/html/web'
   core = drupal_path + '/core/modules/system/system.module'
   modules = drupal_path + '/modules/system/system.module'
   sites = drupal_path + '/sites'
-  
+
   if not os.path.isdir(drupal_path) and not os.path.isfile(core) and not os.path.isfile(modules):
     red("ERROR: Please provide a valid Drupal path.")
     return
-    
+
   try:
     user = target_env['DRUPAL_USER']
     group = target_env['HTTPD_GROUP']
@@ -96,7 +96,7 @@ def do_fix_permissions(target):
   #   print('|', (len(path)) * '---', '[', os.path.basename(dirpath), ']')
   #   for f in files:
   #     print('|', len(path) * '---', f)
-  
+
   normal("Changing ownership of '{0}' to '{1}:{2}'.".format(drupal_path, user, group))
   for root, dirs, files in os.walk(drupal_path):
     for name in dirs:
@@ -108,43 +108,43 @@ def do_fix_permissions(target):
       # debug("Changing ownership of file '{0}.".format(p))
       os.chown(p, uid, gid)
 
-  normal("Changing permissions of all directories inside '{0}' to 'rwxr-x---'.".format(drupal_path))   # was rwxr-xr-x
+  normal("Changing permissions of all directories inside '{0}' to 'rwxr-xr-x'.".format(drupal_path))   # was rwxr-xr-x
   for root, dirs, files in os.walk(drupal_path):
     for name in dirs:
       p = os.path.join(root, name)
-      debug("Changing permissions of directory '{0}' to 'rwxr-x---'.".format(p))
-      os.chmod(p, 0o750)
+      debug("Changing permissions of directory '{0}' to 'rwxr-xr-x'.".format(p))
+      os.chmod(p, 0o755)
 
-  normal("Changing permissions of all files inside '{0}' to 'rw-r-----'.".format(drupal_path))   # was rw-r--r--
+  normal("Changing permissions of all files inside '{0}' to 'rw-r--r--'.".format(drupal_path))   # was rw-r-----
   for root, dirs, files in os.walk(drupal_path):
     for name in files:
       p = os.path.join(root, name)
-      debug("Changing permissions of file '{0}' to 'rw-r-----'.".format(p))
-      os.chmod(p, 0o640)
+      debug("Changing permissions of file '{0}' to 'rw-r--r--'.".format(p))
+      os.chmod(p, 0o644)
 
   # os.chdir(sites)
-  
+
   # Find all */files directories under sites...
   filesDirs = []
   path = sites + "/*/files"
-  normal("Changing permissions of all 'files' directories in '{0}' to 'rwxrwx---'.".format(path))   # was rwxrwxrwx
+  normal("Changing permissions of all 'files' directories in '{0}' to 'rwxrwxrwx'.".format(path))   # was rwxrwx---
 
   for root, dirs, files in os.walk(sites):
     for name in dirs:
       if name == 'files':
         p = os.path.join(root, name)
         filesDirs.append(p)
-        debug("Changing permissions of directory '{0}' to 'rwxrwx---'.".format(p))
-        os.chmod(p, 0o770)
+        debug("Changing permissions of directory '{0}' to 'rwxrwxrwx'.".format(p))
+        os.chmod(p, 0o777)
 
   # Loop on each */files directory under sites...
   for d in filesDirs:
-    normal("Changing permissions of all files inside '{0}' to 'rw-rw----'.".format(d))  # was rw-rw-r--
+    normal("Changing permissions of all files inside '{0}' to 'rw-rw-r--'.".format(d))  # was rw-rw----
     for root, dirs, files in os.walk(d):
       for name in files:
         p = os.path.join(root, name)
-        debug("Changing permissions of file '{0}' to 'rw-rw----'.".format(p))
-        os.chmod(p, 0o660)
+        debug("Changing permissions of file '{0}' to 'rw-rw-r--'.".format(p))
+        os.chmod(p, 0o664)
     # normal("Changing permissions of all directories inside '{0}' to 'rwxrwx---'.".format(d))  # was rwxrwxrwx
     # for root, dirs, files in os.walk(d):
     #   for name in dirs:
@@ -254,10 +254,12 @@ def do_drupal_backup(target):
     unexpected( )
     raise
 
+  stack = "{0}/{1}".format(target_env['STACKS'], target)
+
   # Drush again to dump the SQL
   now = datetime.datetime.now( )
   stamp = now.strftime('%Y-%m-%d-%H-%M')
-  dest = "{1}/_stacks/{0}/mariadb-init/sql-dump_{2}.tmp".format(target, base_dir, stamp)
+  dest = "{0}/mariadb-init/sql-dump_{1}.tmp".format(stack, stamp)
   cmd = "drush @{0}.dev sql-dump".format(target)
 
   try:
@@ -275,21 +277,21 @@ def do_drupal_backup(target):
     raise
 
   # Move all previous dump(s) to .inactive
-  inactive = "{0}/_stacks/{1}/mariadb-init/.inactive".format(base_dir, target)
+  inactive = "{0}/mariadb-init/.inactive".format(stack)
 
   if not os.path.isdir(inactive):
     os.mkdir(inactive)
 
-  wild = "{0}/_stacks/{1}/mariadb-init/*.sql".format(base_dir, target)
+  wild = "{0}/mariadb-init/*.sql".format(stack)
   for sql_file in glob.iglob(wild):
     moved = sql_file.replace('mariadb-init', 'mariadb-init/.inactive')
     normal("Moving old SQL '{0}' to '{1}'.".format(sql_file, moved))
     os.rename(sql_file, moved)
 
   # Concatenate sql.header to the new SQL dump
-  header = "{1}/_stacks/{0}/mariadb-init/sql.header".format(target, base_dir)
+  header = "{0}/mariadb-init/sql.header".format(stack)
   files = [header, dest]
-  final = "{1}/_stacks/{0}/mariadb-init/sql-dump_{2}.sql".format(target, base_dir, stamp)
+  final = "{0}/mariadb-init/sql-dump_{1}.sql".format(stack, stamp)
   normal("Concatenating '{0}' and '{1}' to make '{2}'.".format(header, dest, final))
 
   with open(final, 'w') as outfile:
@@ -299,7 +301,7 @@ def do_drupal_backup(target):
           outfile.write(line)
 
   # Remove any remaining *.tmp files
-  wild = "{0}/_stacks/{1}/mariadb-init/*.tmp".format(base_dir, target)
+  wild = "{0}/mariadb-init/*.tmp".format(stack)
   normal("Removing all temporary '{0}' files.".format(wild))
   for tmp_file in glob.iglob(wild):
     os.unlink(tmp_file)
@@ -343,7 +345,7 @@ def master_parser(target):
     sys.exit(110)
 
   target_found = False
-  
+
   # Check for "all" targets...
   if target == 'traefik' and 'all' in args.targets:
     args.targets = []

@@ -1,0 +1,12 @@
+.master.env
+.env
+traefik/acme.json
+
+app/lib
+app/include
+app/bin
+app/pyvenv.cfg
+
+.idea
+.DS_Store
+.obsolete
