@@ -33,7 +33,7 @@
 #--------------------------------------------------------------------------------------
 
 #--- Config data here ----------------
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 identify = "Port-Ability v{0}".format(VERSION)
 available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'pull-data']
 
@@ -711,6 +711,7 @@ if __name__ == "__main__":
   parser.add_argument('-v', '--verbosity', action='count', help='increase output verbosity (default: OFF)')
   parser.add_argument('--version', action='version', version=identify)
   parser.add_argument('-p', action='store_true', help="turns on Portainer inclusion")
+  parser.add_argument('-i', action='store_true', help="for ISLE...turns off network, Traefik and Portainer inclusion")
   args = parser.parse_args( )
 
   # Set verbosity
@@ -735,9 +736,12 @@ if __name__ == "__main__":
   blue("{0} ({1}) called on {2} with arguments: {3}".format(identify, sys.argv[0], host, arg_list))
 
   # Startup and make sure network and Traefik are up and running
-  environ = master_parser('traefik')
-  ensure_network_is_up( )
-  ensure_traefik_is_up( )
+  if not args.i:
+    environ = master_parser('traefik')
+    ensure_network_is_up( )
+    ensure_traefik_is_up( )
+  else:
+    environ = master_parser('isle')
 
   # Ok, now we are ready to take 'action'.
   if args.action[0] not in available_actions:
