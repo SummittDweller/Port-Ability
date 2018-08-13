@@ -35,7 +35,7 @@
 #--- Config data here ----------------
 VERSION = "1.0.0"
 identify = "Port-Ability v{0}".format(VERSION)
-available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'fetch-data']
+available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'pull-data']
 
 import sys
 import argparse
@@ -270,14 +270,14 @@ def do_restart(target, target_env):
   restart_containers(target, target_env)
 
 #--------------------------------
-def do_fetch_data(target, target_env):
+def do_pull_data(target, target_env):
   global client, base_dir
 
   # Determine the target's Drupal version.  If None, there's no backup to be done.
   try:
     v = target_env['DRUPAL_VERSION']
   except:
-    yellow("Target '{0}' has no DRUPAL_VERSION parameter so no Drupal data fetch is necessary".format(target))
+    yellow("Target '{0}' has no DRUPAL_VERSION parameter so no Drupal data-pull is necessary".format(target))
     return
 
   # This only works for a DEV server!
@@ -774,8 +774,8 @@ if __name__ == "__main__":
     if args.action[0] == 'backup':
       do_drupal_backup(target, target_env)
 
-    if args.action[0] == 'fetch-data':
-      do_fetch_data(target, target_env)
+    if args.action[0] == 'pull-data':
+      do_pull_data(target, target_env)
 
   # All done.  Set working directory back to original.
   os.chdir(cwd)
