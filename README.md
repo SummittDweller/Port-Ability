@@ -41,13 +41,13 @@ This is Port-Ability!
 
 positional arguments:
   action           The action to be performed on the target(s)
-  target           Target apps/sites to be processed
+  target           Target stacks (app and/or sites) to be processed
 
 optional arguments:
   -h, --help       show this help message and exit
   -v, --verbosity  increase output verbosity (default: OFF)
   --version        show program's version number and exit
-  -p               turns off automatic Portainer inclusion
+  -p               turns on Portainer inclusion
 ```
 
 ## History

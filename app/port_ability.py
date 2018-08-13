@@ -696,10 +696,10 @@ if __name__ == "__main__":
   parser.add_argument('action', metavar='action', nargs=1, choices=available_actions,
     help='The action to be performed on the target(s)')
   parser.add_argument('targets', metavar='target', nargs='+',
-    help='Target apps/sites to be processed')
+    help='Target stacks (app and/or sites) to be processed')
   parser.add_argument('-v', '--verbosity', action='count', help='increase output verbosity (default: OFF)')
   parser.add_argument('--version', action='version', version=identify)
-  parser.add_argument('-p', action='store_false', help="turns off automatic Portainer inclusion")
+  parser.add_argument('-p', action='store_true', help="turns on Portainer inclusion")
   args = parser.parse_args( )
 
   # Set verbosity
