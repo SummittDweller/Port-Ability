@@ -286,25 +286,36 @@ def do_fetch_data(target, target_env):
     yellow("This action can only be run from a DEV server!")
     return
 
-  # Build and execute a remote 'port-ability backup' command.
+  # Build and execute a remote 'port-ability backup' command. @TODO Not working.
   # do_drupal_backup(target, target_env)
 
-  # Build an rsync command to pull the SQL...
-  cmd1 = "rsync -aruvi {0}@{1}:{2}/{3}/mariadb-init/. {4}/{3}/mariadb-init/ --progress".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
-  green("Fetching SQL data via: '{0}'".format(cmd1))
+  # Move all local *.sql files from mariadb-init to .inactive
+  cmd = "rsync -aruvi {1}/{0}/mariadb-init/*.sql {1}/{0}/mariadb-init/.inactive/ --progress --remove-source-files".format(target, target_env['STACKS'])
+  green("Moving all *.sql files from mariadb-init to .inactive: '{0}'".format(cmd))
   try:
-    # debug("Command '{0}' is disabled.".format(cmd1))
-    os.system(cmd1)
+    # debug("Command '{0}' is disabled.".format(cmd))
+    os.system(cmd)
+  except:
+    unexpected( )
+    raise
+
+
+  # Build an rsync command to pull the SQL...
+  cmd = "rsync -aruvi {0}@{1}:{2}/{3}/mariadb-init/. {4}/{3}/mariadb-init/ --progress".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
+  green("Fetching SQL data via: '{0}'".format(cmd))
+  try:
+    # debug("Command '{0}' is disabled.".format(cmd))
+    os.system(cmd)
   except:
     unexpected( )
     raise
 
   #...and 'files' contents back to this DEV server.
-  cmd2 = "rsync -aruvi {0}@{1}:{2}/{3}/html/web/sites/{3}/files/. {4}/{3}/html/web/sites/{3}/files/ --progress".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
-  green("Fetching 'files' via: '{0}'".format(cmd2))
+  cmd = "rsync -aruvi {0}@{1}:{2}/{3}/html/web/sites/{3}/files/. {4}/{3}/html/web/sites/{3}/files/ --progress".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
+  green("Fetching 'files' via: '{0}'".format(cmd))
   try:
-    # debug("Command '{0}' is disabled.".format(cmd2))
-    os.system(cmd2)
+    # debug("Command '{0}' is disabled.".format(cmd))
+    os.system(cmd)
   except:
     unexpected( )
     raise
