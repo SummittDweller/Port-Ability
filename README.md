@@ -20,12 +20,12 @@ cd ~
 git clone https://github.com/SummittDweller/Port-Ability.git
 cd ~/Port-Ability
 mv -f app app-backup
-python3 -m venv app
+python3 -m venv app     # assumes 'python3' runs a Python version 3 interpreter.  Mine is version 3.6
 source app/bin/activate
 rsync -aruvi app-backup/. app/ --exclude=bin --exclude=include --exclude=lib --exclude=pyvenv.cfg --progress
 rm -fr app-backup
 cd app
-curl https://bootstrap.pypa.io/get-pip.py | python
+curl https://bootstrap.pypa.io/get-pip.py | python3
 pip install -r requirements.txt
 sudo ln -s ~/Port-Ability/app/port-ability.sh /usr/local/bin/port-ability
 ```

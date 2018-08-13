@@ -13,7 +13,7 @@
 #
 #     cd ~/Port-Ability; mv -f app app-backup; python3 -m venv app; source app/bin/activate
 #     rsync -aruvi app-backup/. app/ --exclude=bin --exclude=include --exclude=lib --exclude=pyvenv.cfg --progress
-#     rm -fr app-backup; cd app; curl https://bootstrap.pypa.io/get-pip.py | python; pip install -r requirements.txt
+#     rm -fr app-backup; cd app; curl https://bootstrap.pypa.io/get-pip.py | python3; pip install -r requirements.txt
 #
 #   Packaging and distribution of this utility should follow the guidance provided at
 #     https://packaging.python.org/tutorials/packaging-projects/
@@ -35,7 +35,7 @@
 #--- Config data here ----------------
 VERSION = "1.0.0"
 identify = "Port-Ability v{0}".format(VERSION)
-available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions']
+available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'fetch-data']
 
 import sys
 import argparse
@@ -125,7 +125,7 @@ def do_fix_permissions(target, target_env):
   for root, dirs, files in os.walk(drupal_path):
     for name in dirs:
       p = os.path.join(root, name)
-      debug("Changing permissions of directory '{0}' to 'rwxr-xr-x'.".format(p))
+      # debug("Changing permissions of directory '{0}' to 'rwxr-xr-x'.".format(p))
       try:
         os.chmod(p, 0o755)
       except PermissionError:
@@ -138,7 +138,7 @@ def do_fix_permissions(target, target_env):
   for root, dirs, files in os.walk(drupal_path):
     for name in files:
       p = os.path.join(root, name)
-      debug("Changing permissions of file '{0}' to 'rw-r--r--'.".format(p))
+      # debug("Changing permissions of file '{0}' to 'rw-r--r--'.".format(p))
       try:
         os.chmod(p, 0o644)
       except PermissionError:
@@ -147,7 +147,7 @@ def do_fix_permissions(target, target_env):
         unexpected( )
         raise
 
-  # Find all */files directories under sites...
+  # Find all sites/*/files directories...
   filesDirs = []
   path = sites + "/*/files"
   normal("Changing permissions of all 'files' directories in '{0}' to 'rwxrwxrwx'.".format(path))   # was rwxrwx---
@@ -157,7 +157,7 @@ def do_fix_permissions(target, target_env):
       if name == 'files':
         p = os.path.join(root, name)
         filesDirs.append(p)
-        debug("Changing permissions of directory '{0}' to 'rwxrwxrwx'.".format(p))
+        # debug("Changing permissions of directory '{0}' to 'rwxrwxrwx'.".format(p))
         try:
           os.chmod(p, 0o777)
         except PermissionError:
@@ -172,7 +172,7 @@ def do_fix_permissions(target, target_env):
     for root, dirs, files in os.walk(d):
       for name in files:
         p = os.path.join(root, name)
-        debug("Changing permissions of file '{0}' to 'rw-rw-r--'.".format(p))
+        # debug("Changing permissions of file '{0}' to 'rw-rw-r--'.".format(p))
         try:
           os.chmod(p, 0o664)
         except PermissionError:
@@ -186,7 +186,7 @@ def do_fix_permissions(target, target_env):
       for name in dirs:
         if name in ['js', 'ctools', 'css'] :
           p = os.path.join(root, name)
-          debug("Changing permissions of directory '{0}' to 'rwxrwxrwx'.".format(p))
+          # debug("Changing permissions of directory '{0}' to 'rwxrwxrwx'.".format(p))
           try:
             os.chmod(p, 0o777)
           except PermissionError:
@@ -268,7 +268,46 @@ def do_stop(target, target_env):
 def do_restart(target, target_env):
   remove_containers(target, target_env)
   restart_containers(target, target_env)
-  pass
+
+#--------------------------------
+def do_fetch_data(target, target_env):
+  global client, base_dir
+
+  # Determine the target's Drupal version.  If None, there's no backup to be done.
+  try:
+    v = target_env['DRUPAL_VERSION']
+  except:
+    yellow("Target '{0}' has no DRUPAL_VERSION parameter so no Drupal data fetch is necessary".format(target))
+    return
+
+  # This only works for a DEV server!
+  e = target_env['ENVIRONMENT']
+  if not e == 'dev':
+    yellow("This action can only be run from a DEV server!")
+    return
+
+  # Build and execute a remote 'port-ability backup' command.
+  # do_drupal_backup(target, target_env)
+
+  # Build an rsync command to pull the SQL...
+  cmd1 = "rsync -aruvi {0}@{1}:{2}/{3}/mariadb-init/. {4}/{3}/mariadb-init/ --progress".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
+  green("Fetching SQL data via: '{0}'".format(cmd1))
+  try:
+    # debug("Command '{0}' is disabled.".format(cmd1))
+    os.system(cmd1)
+  except:
+    unexpected( )
+    raise
+
+  #...and 'files' contents back to this DEV server.
+  cmd2 = "rsync -aruvi {0}@{1}:{2}/{3}/html/web/sites/{3}/files/. {4}/{3}/html/web/sites/{3}/files/ --progress".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
+  green("Fetching 'files' via: '{0}'".format(cmd2))
+  try:
+    # debug("Command '{0}' is disabled.".format(cmd2))
+    os.system(cmd2)
+  except:
+    unexpected( )
+    raise
 
 #--------------------------------
 def do_drupal_backup(target, target_env):
@@ -723,6 +762,9 @@ if __name__ == "__main__":
 
     if args.action[0] == 'backup':
       do_drupal_backup(target, target_env)
+
+    if args.action[0] == 'fetch-data':
+      do_fetch_data(target, target_env)
 
   # All done.  Set working directory back to original.
   os.chdir(cwd)
