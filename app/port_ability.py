@@ -711,7 +711,7 @@ if __name__ == "__main__":
   parser.add_argument('-v', '--verbosity', action='count', help='increase output verbosity (default: OFF)')
   parser.add_argument('--version', action='version', version=identify)
   parser.add_argument('-p', action='store_true', help="turns on Portainer inclusion")
-  parser.add_argument('-i', action='store_true', help="for ISLE...turns off network, Traefik and Portainer inclusion")
+  parser.add_argument('-i', action='store_true', help="for ISLE...no network, or Portainer")
   args = parser.parse_args( )
 
   # Set verbosity
