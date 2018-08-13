@@ -50,6 +50,128 @@ optional arguments:
   -p               turns on Portainer inclusion
 ```
 
+### Actions
+
+Available actions are:
+
+  - test -- This action returns information about...
+
+    - Docker (the equivalent of `docker info`),
+    - the _port-ability-proxy_ network,
+    - the _traefik_ container,
+    - and all containers that are part of the _target_ stack.
+
+
+  - stop -- This action...
+
+    - stops (as in `docker stop ...`) all _target_ containers,
+    - removes the stopped containers along with non-persistent volumes (like `docker rm -v ...`), and
+    - prunes unused Docker networks (like `docker prune`).
+
+
+  - restart -- This action...
+
+    - ensures that _traefik_ is running (restarting it if necessary),
+    - stops all _target_ containers (just like the 'stop' action above), and
+    - restarts the _target_ stack using the appropriate `docker-compose up -d` command.
+
+
+  - backup -- @TODO Documentation to be provided.
+
+  - fix-permissions -- @TODO Documentation to be provided.
+
+  - pull-data -- @TODO Documentation to be provided.
+
+#### test
+
+It is recommended that the 'test' action be run with verbosity ov -vv.  For example, executing `port-ability -vv test wieting` in my DEV environment recently produced this output:
+
+```
+Port-Ability v1.0.0 (app/port_ability.py) called on Mark-iMac with arguments: -vv test wieting
+OK, you are targeting 'traefik' in a 'dev' environment on host 'Mark-iMac'.
+The 'port-ability-proxy' network already exists.  Moving on.
+The 'Traefik' container already exists and is running.  Moving on.
+OK, you are targeting 'wieting' in a 'dev' environment on host 'Mark-iMac'.
+Launching a 'test' action for target 'wieting'.
+Docker info:
+   ID: 4RT4:NH4H:FV6B:4HHH:QVT2:AHWC:AGQ3:HR3K:L6MO:Q4HJ:QOGN:DDMU
+   Containers: 21
+   ContainersRunning: 21
+   ContainersPaused: 0
+   ContainersStopped: 0
+   Images: 25
+   Driver: overlay2
+   DriverStatus: [['Backing Filesystem', 'extfs'], ['Supports d_type', 'true'], ['Native Overlay Diff', 'true']]
+   SystemStatus: None
+   Plugins: {'Volume': ['local'], 'Network': ['bridge', 'host', 'ipvlan', 'macvlan', 'null', 'overlay'], 'Authorization': None, 'Log': ['awslogs', 'fluentd', 'gcplogs', 'gelf', 'journald', 'json-file', 'logentries', 'splunk', 'syslog']}
+   MemoryLimit: True
+   SwapLimit: True
+   KernelMemory: True
+   CpuCfsPeriod: True
+   CpuCfsQuota: True
+   CPUShares: True
+   CPUSet: True
+   IPv4Forwarding: True
+   BridgeNfIptables: True
+   BridgeNfIp6tables: True
+   Debug: True
+   NFd: 367
+   OomKillDisable: True
+   NGoroutines: 363
+   SystemTime: 2018-08-13T16:51:57.277249118Z
+   LoggingDriver: json-file
+   CgroupDriver: cgroupfs
+   NEventsListener: 3
+   KernelVersion: 4.9.93-linuxkit-aufs
+   OperatingSystem: Docker for Mac
+   OSType: linux
+   Architecture: x86_64
+   IndexServerAddress: https://index.docker.io/v1/
+   RegistryConfig: {'AllowNondistributableArtifactsCIDRs': [], 'AllowNondistributableArtifactsHostnames': [], 'InsecureRegistryCIDRs': ['127.0.0.0/8'], 'IndexConfigs': {'docker.io': {'Name': 'docker.io', 'Mirrors': [], 'Secure': True, 'Official': True}}, 'Mirrors': []}
+   NCPU: 2
+   MemTotal: 2096058368
+   GenericResources: None
+   DockerRootDir: /var/lib/docker
+   HttpProxy: gateway.docker.internal:3128
+   HttpsProxy: gateway.docker.internal:3129
+   NoProxy:
+   Name: linuxkit-025000000001
+   Labels: []
+   ExperimentalBuild: True
+   ServerVersion: 18.06.0-ce
+   ClusterStore:
+   ClusterAdvertise:
+   Runtimes: {'runc': {'path': 'docker-runc'}}
+   DefaultRuntime: runc
+   Swarm: {'NodeID': '', 'NodeAddr': '', 'LocalNodeState': 'inactive', 'ControlAvailable': False, 'Error': '', 'RemoteManagers': None}
+   LiveRestoreEnabled: False
+   Isolation:
+   InitBinary: docker-init
+   ContainerdCommit: {'ID': 'd64c661f1d51c48782c9cec8fda7604785f93587', 'Expected': 'd64c661f1d51c48782c9cec8fda7604785f93587'}
+   RuncCommit: {'ID': '69663f0bd4b60df09991c08812a60108003fa340', 'Expected': '69663f0bd4b60df09991c08812a60108003fa340'}
+   InitCommit: {'ID': 'fec3683', 'Expected': 'fec3683'}
+   SecurityOptions: ['name=seccomp,profile=default']
+Container 'wieting_mariadb' exists with a status of: running.
+Container 'wieting_nginx' exists with a status of: running.
+Container 'wieting_php' exists with a status of: running.
+That's all folks!
+```
+
+#### stop
+@TODO Documentation to be provided.
+
+#### restart
+@TODO Documentation to be provided.
+
+#### backup
+@TODO Documentation to be provided.
+
+#### fix-permissions
+@TODO Documentation to be provided.
+
+#### pull-data
+@TODO Documentation to be provided.
+
 ## History
 
 This project is a re-write of my earlier SummittServices.com (SS) project work.  It began as a stripped-down version of _SS_ with only _Traefik_ and _Portainer_ left in the original.  Much of the _Traefix_ and cert handling here was informed by https://www.digitalocean.com/community/tutorials/how-to-use-traefik-as-a-reverse-proxy-for-docker-containers-on-ubuntu-16-04.  
