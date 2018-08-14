@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #--------------------------------------------------------------------------------------
-# port_ability.py      Modified: 2018-08-11 16:15:38
+# port_ability.py      Modified: Tuesday, August 14, 2018 9:06 AM
 #
 # If Pythonized...
 #
@@ -33,7 +33,7 @@
 #--------------------------------------------------------------------------------------
 
 #--- Config data here ----------------
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 identify = "Port-Ability v{0}".format(VERSION)
 available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'pull-data']
 
@@ -266,8 +266,22 @@ def do_stop(target, target_env):
 
 #--------------------------------
 def do_restart(target, target_env):
+
   remove_containers(target, target_env)
+
   restart_containers(target, target_env)
+
+  # If target_env['POST_RESTART_SCRIPT'] is defined, do an os.system( ) call with it.  Added in v1.2.0
+  try:
+    script = target_env['POST_RESTART_SCRIPT']
+    green("Attempting to run POST_RESTART_SCRIPT '{0}'.".format(script))
+    os.system(script)
+  except KeyError:
+    debug("There is no POST_RESTART_SCRIPT environment key defined for this target.  Moving on.")
+  except:
+    unexpected( )
+    raise
+
 
 #--------------------------------
 def do_pull_data(target, target_env):
@@ -523,16 +537,16 @@ def process_section(section, severity, config):
       normal("  '{0}' is a key in [{2}] with a value of '{1}'".format(key, parts[0].strip( ), section))
 
 #--------------------------------
-def ensure_network_is_up( ):
+def ensure_network_is_up(environ):
   global client, base_dir
 
   try:
-    networks = client.networks.list('port-ability-proxy')
+    networks = client.networks.list(environ['NETWORK_PROXY'])
     if len(networks) > 0:
-      green("The 'port-ability-proxy' network already exists.  Moving on.")
+      green("The '{0}' network already exists.  Moving on.".format(environ['NETWORK_PROXY']))
     else:
-      client.networks.create(name='port-ability-proxy')
-      green("The 'port-ability-proxy' network has been created.  Moving on.")
+      client.networks.create(name=environ['NETWORK_PROXY'])
+      green("The '{0}' network has been created.  Moving on.".format(environ['NETWORK_PROXY']))
   except:
     unexpected( )
     raise
@@ -565,8 +579,8 @@ def ensure_traefik_is_up( ):
      -p 80:80 -p 443:443 \
      -l traefik.frontend.rule=Host:{2}.{3} \
      -l traefik.port=8080 \
-     --network port-ability-proxy --name traefik traefik:{4} --docker".format(base_dir,
-       environ['ENVIRONMENT'], environ['SUBDOMAIN'], environ['DOMAIN'], environ['TRAEFIK_VERSION'])
+     --network {5} --name traefik traefik:{4} --docker".format(base_dir,
+       environ['ENVIRONMENT'], environ['SUBDOMAIN'], environ['DOMAIN'], environ['TRAEFIK_VERSION'], environ['NETWORK_PROXY'])
 
   debug("Command to restart Traefik is: \n{0}".format(cmd))
 
@@ -738,7 +752,7 @@ if __name__ == "__main__":
   # Startup and make sure network and Traefik are up and running
   if not args.i:
     environ = master_parser('traefik')
-    ensure_network_is_up( )
+    ensure_network_is_up(environ)
     ensure_traefik_is_up( )
   else:
     environ = master_parser('isle')
