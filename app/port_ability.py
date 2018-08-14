@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #--------------------------------------------------------------------------------------
-# port_ability.py      Modified: Tuesday, August 14, 2018 9:06 AM
+# port_ability.py      Modified: Tuesday, August 14, 2018 10:34 AM
 #
 # If Pythonized...
 #
@@ -33,7 +33,7 @@
 #--------------------------------------------------------------------------------------
 
 #--- Config data here ----------------
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 identify = "Port-Ability v{0}".format(VERSION)
 available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'pull-data']
 
@@ -755,6 +755,9 @@ if __name__ == "__main__":
     ensure_network_is_up(environ)
     ensure_traefik_is_up( )
   else:
+    args.p = False
+    if 'portainer' in args.targets:
+      args.targets.remove('portainer')
     environ = master_parser('isle')
 
   # Ok, now we are ready to take 'action'.

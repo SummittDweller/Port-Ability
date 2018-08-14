@@ -1,3 +1,5 @@
+# Modified: Tuesday, August 14, 2018 10:29 AM
+
 version: '3.5'
 
 networks:
@@ -16,9 +18,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - internal
-      - port-ability-proxy
+      - ${NETWORK_PROXY}
     labels:
       - traefik.backend=portainer_portainer
       - traefik.port=9000
       - traefik.frontend.rule=Host:${PROJECT_FULL_URL}
-      - traefik.docker.network=port-ability-proxy
+      - traefik.docker.network=${NETWORK_PROXY}
