@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #--------------------------------------------------------------------------------------
-# port_ability.py      Modified: Tuesday, August 14, 2018 10:34 AM
+# port_ability.py      Modified: Thursday, August 16, 2018 1:15 PM
 #
 # If Pythonized...
 #
@@ -33,7 +33,7 @@
 #--------------------------------------------------------------------------------------
 
 #--- Config data here ----------------
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 identify = "Port-Ability v{0}".format(VERSION)
 available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'pull-data']
 
@@ -553,7 +553,7 @@ def ensure_network_is_up(environ):
 
 #--------------------------------
 def ensure_traefik_is_up( ):
-  global base_dir, client, environ, verbose
+  global host, base_dir, client, environ, verbose
 
   try:
     cont = client.containers.get('traefik')
@@ -573,17 +573,29 @@ def ensure_traefik_is_up( ):
     unexpected( )
     raise
 
+  # Determine if we have a traefik.toml.ENV.HOST file, or just traefik.toml.ENV to use
+  toml_path = "{0}/traefik/traefik.toml.{1}.{2}".format(base_dir, environ['ENVIRONMENT'], host)
+  toml_default = "{0}/traefik/traefik.toml.{1}".format(base_dir, environ['ENVIRONMENT'])
+  if not os.path.isfile(toml_path):
+    normal("There is no '{0}' file for Traefik configuration.  Attempting to use '{1}' instead.".foramt(toml_path, toml_default))
+    toml_path = toml_default
+    if not os.path.isfile(toml_path):
+      red("There is no suitable .toml file for Traefik configuration.  Traefik failed to start.")
+      return
+
+  # Build the Docker command used to launch Traefik.
   cmd = "docker run -d -v /var/run/docker.sock:/var/run/docker.sock \
-     -v {0}/traefik/traefik.toml.{1}:/traefik.toml \
+     -v {1}:/traefik.toml \
      -v {0}/traefik/acme.json:/acme.json \
      -p 80:80 -p 443:443 \
      -l traefik.frontend.rule=Host:{2}.{3} \
      -l traefik.port=8080 \
      --network {5} --name traefik traefik:{4} --docker".format(base_dir,
-       environ['ENVIRONMENT'], environ['SUBDOMAIN'], environ['DOMAIN'], environ['TRAEFIK_VERSION'], environ['NETWORK_PROXY'])
+       toml_path, environ['SUBDOMAIN'], environ['DOMAIN'], environ['TRAEFIK_VERSION'], environ['NETWORK_PROXY'])
 
   debug("Command to restart Traefik is: \n{0}".format(cmd))
 
+  # Do it.
   try:
     result = os.system(cmd)
   except:

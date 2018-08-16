@@ -1,0 +1,27 @@
+# File: traefik.toml.prod.dgdocker1
+# Modified: Thursday, August 16, 2018 12:51 PM
+
+defaultEntryPoints = ["http", "https"]
+[web]
+address = ":8080"
+  [web.auth.basic]
+  users = ["admin:$apr1$8tJrbWe/$zVd4CiqRAHXYGxIoUEMSU."]
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+      entryPoint = "https"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+[acme]
+email = "digital@grinnell.edu"
+storage = "acme.json"
+entryPoint = "https"
+onHostRule = true
+onDemand = false
+[[acme.domains]]
+  sans = ["traefik.grinnell.edu", "portainer.grinnell.edu", "textline.grinnell.edu", "ohscribe.grinnell.edu"]
+[acme.httpChallenge]
+entryPoint = "http"
+delayBeforeCheck = 0
