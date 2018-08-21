@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #--------------------------------------------------------------------------------------
-# port_ability.py      Modified: Thursday, August 16, 2018 1:15 PM
+# port_ability.py      Modified: Tuesday, August 21, 2018 8:50 AM
 #
 # If Pythonized...
 #
@@ -33,7 +33,7 @@
 #--------------------------------------------------------------------------------------
 
 #--- Config data here ----------------
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 identify = "Port-Ability v{0}".format(VERSION)
 available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'pull-data']
 
@@ -429,6 +429,31 @@ def master_parser(target):
   config.optionxform = str    # preserve case
   config.read(base_dir + '/_master/.master.env')
 
+  # Process all of the 'required' key=value pairs.
+  process_section('required', 'ERROR', config)
+
+  # Check the PA_VERSION variable versus the version number of this script.
+  version_found = False
+  required = config.items('required')
+
+  for key, value in required:
+    if key == 'PA_VERSION':
+      (val, comment) = value.split(' ', 1)
+      parts = val.split('.', 2)
+      min_version = int(parts[0])*100 + int(parts[1])*10 + int(parts[2])
+      parts = VERSION.split('.', 2)
+      this_version = int(parts[0])*100 + int(parts[1])*10 + int(parts[2])
+      if min_version > this_version:
+        red("ERROR: Your '.master.env' file specifies a minimum Port-Ability version of '{0}' but this script is version '{1}'!\n\n".format(val, VERSION))
+        sys.exit(20)
+      else:
+        version_found = True
+      break
+
+  if not version_found:
+    red("ERROR: Your '.master.env' file does not specify a reqiured 'PA_VERSION'!\n\n")
+    sys.exit(30)
+
   # Make sure the host is in our [servers] list.
   try:
     servers = config.items('servers')
@@ -577,7 +602,7 @@ def ensure_traefik_is_up( ):
   toml_path = "{0}/traefik/traefik.toml.{1}.{2}".format(base_dir, environ['ENVIRONMENT'], host)
   toml_default = "{0}/traefik/traefik.toml.{1}".format(base_dir, environ['ENVIRONMENT'])
   if not os.path.isfile(toml_path):
-    normal("There is no '{0}' file for Traefik configuration.  Attempting to use '{1}' instead.".foramt(toml_path, toml_default))
+    normal("There is no '{0}' file for Traefik configuration.  Attempting to use '{1}' instead.".format(toml_path, toml_default))
     toml_path = toml_default
     if not os.path.isfile(toml_path):
       red("There is no suitable .toml file for Traefik configuration.  Traefik failed to start.")
