@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 #--------------------------------------------------------------------------------------
-# port_ability.py      Modified: Tuesday, August 21, 2018 8:50 AM
+# port_ability.py      Modified: Monday, September 3, 2018 9:25 AM
+#
 #
 # If Pythonized...
 #
@@ -33,9 +34,25 @@
 #--------------------------------------------------------------------------------------
 
 #--- Config data here ----------------
-VERSION = "1.4.0"
+VERSION = "1.5.0"
 identify = "Port-Ability v{0}".format(VERSION)
+
+with open('./app/port_ability.py', 'r') as inF:
+  for line in inF:
+    if 'Modified: ' in line:
+      trash, mod = line.split('Modified:', 2)
+      extra_info = "Modified: " + mod.strip()
+      break
+
+with open('./_master/.master.env', 'r') as inF:
+  for line in inF:
+    if 'Modified: ' in line:
+      trash, mod = line.split('Modified:', 2)
+      master_info = ".master.env Modified: " + mod.strip()
+      break
+
 available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'pull-data']
+
 
 import sys
 import argparse
@@ -760,7 +777,7 @@ if __name__ == "__main__":
   parser.add_argument('targets', metavar='target', nargs='+',
     help='Target stacks (app and/or sites) to be processed')
   parser.add_argument('-v', '--verbosity', action='count', help='increase output verbosity (default: OFF)')
-  parser.add_argument('--version', action='version', version=identify)
+  parser.add_argument('--version', action='version', version=identify + " " + extra_info)
   parser.add_argument('-p', action='store_true', help="turns on Portainer inclusion")
   parser.add_argument('-i', action='store_true', help="for ISLE...no network, Traefik or Portainer")
   args = parser.parse_args( )
@@ -785,6 +802,7 @@ if __name__ == "__main__":
   # Provide some feedback to the user
   arg_list = " ".join(sys.argv[1:])
   blue("{0} ({1}) called on {2} with arguments: {3}".format(identify, sys.argv[0], host, arg_list))
+  blue("  port_ability.py {0} and {1}".format(extra_info, master_info))
 
   # Startup and make sure network and Traefik are up and running
   if not args.i:
