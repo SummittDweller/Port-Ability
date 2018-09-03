@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #--------------------------------------------------------------------------------------
-# port_ability.py      Modified: Monday, September 3, 2018 9:25 AM
+# port_ability.py      Modified: Monday, September 3, 2018 3:36 PM
 #
 #
 # If Pythonized...
@@ -34,7 +34,7 @@
 #--------------------------------------------------------------------------------------
 
 #--- Config data here ----------------
-VERSION = "1.5.0"
+VERSION = "1.6.0"
 identify = "Port-Ability v{0}".format(VERSION)
 
 with open('./app/port_ability.py', 'r') as inF:
@@ -51,7 +51,7 @@ with open('./_master/.master.env', 'r') as inF:
       master_info = ".master.env Modified: " + mod.strip()
       break
 
-available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'pull-data']
+available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'pull-data', 'push-code']
 
 
 import sys
@@ -299,6 +299,32 @@ def do_restart(target, target_env):
     unexpected( )
     raise
 
+#--------------------------------
+def do_push_code(target, target_env):
+  global client, base_dir
+
+  # Determine the target's Drupal version.  If None, there's no backup to be done.
+  try:
+    v = target_env['DRUPAL_VERSION']
+  except:
+    yellow("Target '{0}' has no DRUPAL_VERSION parameter so no Drupal code-push is possible".format(target))
+    return
+
+  # This only works for a DEV server!
+  e = target_env['ENVIRONMENT']
+  if not e == 'dev':
+    yellow("This action can only be run from a DEV server!")
+    return
+
+  # Build an rsync command to push the code from /var/www/html up to PROD...
+  cmd = "rsync -aruvi {4}/{3}/html/. {0}@{1}:{2}/{3}/html/ --progress --exclude=sites/{3}/files".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
+  green("Pushing code via: '{0}'".format(cmd))
+  try:
+    debug("Command '{0}' is disabled.".format(cmd))
+    # os.system(cmd)
+  except:
+    unexpected( )
+    raise
 
 #--------------------------------
 def do_pull_data(target, target_env):
@@ -329,7 +355,6 @@ def do_pull_data(target, target_env):
   except:
     unexpected( )
     raise
-
 
   # Build an rsync command to pull the SQL...
   cmd = "rsync -aruvi {0}@{1}:{2}/{3}/mariadb-init/. {4}/{3}/mariadb-init/ --progress".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
@@ -852,6 +877,9 @@ if __name__ == "__main__":
 
     if args.action[0] == 'pull-data':
       do_pull_data(target, target_env)
+
+    if args.action[0] == 'push-code':
+      do_push_code(target, target_env)
 
   # All done.  Set working directory back to original.
   os.chdir(cwd)
