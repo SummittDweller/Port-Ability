@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #--------------------------------------------------------------------------------------
-# port_ability.py      Modified: Monday, September 3, 2018 3:36 PM
+# port_ability.py      Modified: Monday, September 3, 2018 4:54 PM
 #
 #
 # If Pythonized...
@@ -34,7 +34,7 @@
 #--------------------------------------------------------------------------------------
 
 #--- Config data here ----------------
-VERSION = "1.6.0"
+VERSION = "1.7.0"
 identify = "Port-Ability v{0}".format(VERSION)
 
 with open('./app/port_ability.py', 'r') as inF:
@@ -64,6 +64,7 @@ import datetime
 import glob
 import pwd
 import grp
+import shutil
 
 from colorama import init, Fore, Back, Style
 
@@ -316,8 +317,8 @@ def do_push_code(target, target_env):
     yellow("This action can only be run from a DEV server!")
     return
 
-  # Build an rsync command to push the code from /var/www/html up to PROD...
-  cmd = "rsync -aruvi {4}/{3}/html/. {0}@{1}:{2}/{3}/html/ --progress --exclude=sites/{3}/files".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
+  # Build an rsync command to push the code from the target directory to PROD...
+  cmd = "rsync -aruvi {4}/{3}/. {0}@{1}:{2}/{3}/ --progress --exclude=mariadb-init/ --exclude=sites/{3}/files/".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
   green("Pushing code via: '{0}'".format(cmd))
   try:
     debug("Command '{0}' is disabled.".format(cmd))
@@ -699,7 +700,7 @@ def remove_containers(target, target_env):
 def restart_containers(target, target_env):
   global base_dir
 
-  # Get the current working directory, and move to the target _stacks directory
+  # Get the current working directory, and move to the target Stacks directory
   target_env['BASE_PATH'] = base_dir + "/"
   wd = target_env['STACKS'] + "/" + target_env['PROJECT_PATH']
   os.chdir(wd)
@@ -711,6 +712,19 @@ def restart_containers(target, target_env):
       dotenv.write("{0}={1}\n".format(key, value))
     dotenv.close( )
   os.chmod('.env', 0o600)
+
+  # If DOCKER_COMPOSE_FILE is defined, copy the specified file to the target directory
+  try:
+    yaml = target_env['DOCKER_COMPOSE_FILE']
+    dc_source = target_env['BASE_PATH'] + "_master/" + yaml
+    dc_dest = wd + "/docker-compose.yml"
+    green("Copying {0} to {1} per DOCKER_COMPOSE_FILE setting.".format(dc_source, dc_dest))
+    shutil.copyfile(dc_source, dc_dest)
+  except KeyError:
+    pass
+  except:
+    unexpected()
+    raise
 
   # Use 'docker compose up -d' to build the target stack
   try:
