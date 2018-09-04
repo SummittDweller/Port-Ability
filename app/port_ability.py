@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #--------------------------------------------------------------------------------------
-# port_ability.py      Modified: Monday, September 3, 2018 4:54 PM
+# port_ability.py      Modified: Monday, September 3, 2018 8:58 PM
 #
 #
 # If Pythonized...
@@ -321,8 +321,8 @@ def do_push_code(target, target_env):
   cmd = "rsync -aruvi {4}/{3}/. {0}@{1}:{2}/{3}/ --progress --exclude=mariadb-init/ --exclude=sites/{3}/files/".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
   green("Pushing code via: '{0}'".format(cmd))
   try:
-    debug("Command '{0}' is disabled.".format(cmd))
-    # os.system(cmd)
+    # debug("Command '{0}' is disabled.".format(cmd))
+    os.system(cmd)
   except:
     unexpected( )
     raise
