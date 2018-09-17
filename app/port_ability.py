@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 #--------------------------------------------------------------------------------------
-# port_ability.py      Modified: Tuesday, August 21, 2018 8:50 AM
+# port_ability.py      Modified: Monday, September 3, 2018 8:58 PM
+#
 #
 # If Pythonized...
 #
@@ -33,9 +34,25 @@
 #--------------------------------------------------------------------------------------
 
 #--- Config data here ----------------
-VERSION = "1.4.0"
+VERSION = "1.7.0"
 identify = "Port-Ability v{0}".format(VERSION)
-available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'pull-data']
+
+with open('./app/port_ability.py', 'r') as inF:
+  for line in inF:
+    if 'Modified: ' in line:
+      trash, mod = line.split('Modified:', 2)
+      extra_info = "Modified: " + mod.strip()
+      break
+
+with open('./_master/.master.env', 'r') as inF:
+  for line in inF:
+    if 'Modified: ' in line:
+      trash, mod = line.split('Modified:', 2)
+      master_info = ".master.env Modified: " + mod.strip()
+      break
+
+available_actions = ['test', 'stop', 'restart', 'backup', 'fix-permissions', 'pull-data', 'push-code']
+
 
 import sys
 import argparse
@@ -47,6 +64,7 @@ import datetime
 import glob
 import pwd
 import grp
+import shutil
 
 from colorama import init, Fore, Back, Style
 
@@ -282,6 +300,32 @@ def do_restart(target, target_env):
     unexpected( )
     raise
 
+#--------------------------------
+def do_push_code(target, target_env):
+  global client, base_dir
+
+  # Determine the target's Drupal version.  If None, there's no backup to be done.
+  try:
+    v = target_env['DRUPAL_VERSION']
+  except:
+    yellow("Target '{0}' has no DRUPAL_VERSION parameter so no Drupal code-push is possible".format(target))
+    return
+
+  # This only works for a DEV server!
+  e = target_env['ENVIRONMENT']
+  if not e == 'dev':
+    yellow("This action can only be run from a DEV server!")
+    return
+
+  # Build an rsync command to push the code from the target directory to PROD...
+  cmd = "rsync -aruvi {4}/{3}/. {0}@{1}:{2}/{3}/ --progress --exclude=mariadb-init/ --exclude=sites/{3}/files/".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
+  green("Pushing code via: '{0}'".format(cmd))
+  try:
+    # debug("Command '{0}' is disabled.".format(cmd))
+    os.system(cmd)
+  except:
+    unexpected( )
+    raise
 
 #--------------------------------
 def do_pull_data(target, target_env):
@@ -312,7 +356,6 @@ def do_pull_data(target, target_env):
   except:
     unexpected( )
     raise
-
 
   # Build an rsync command to pull the SQL...
   cmd = "rsync -aruvi {0}@{1}:{2}/{3}/mariadb-init/. {4}/{3}/mariadb-init/ --progress".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
@@ -657,7 +700,7 @@ def remove_containers(target, target_env):
 def restart_containers(target, target_env):
   global base_dir
 
-  # Get the current working directory, and move to the target _stacks directory
+  # Get the current working directory, and move to the target Stacks directory
   target_env['BASE_PATH'] = base_dir + "/"
   wd = target_env['STACKS'] + "/" + target_env['PROJECT_PATH']
   os.chdir(wd)
@@ -669,6 +712,19 @@ def restart_containers(target, target_env):
       dotenv.write("{0}={1}\n".format(key, value))
     dotenv.close( )
   os.chmod('.env', 0o600)
+
+  # If DOCKER_COMPOSE_FILE is defined, copy the specified file to the target directory
+  try:
+    yaml = target_env['DOCKER_COMPOSE_FILE']
+    dc_source = target_env['BASE_PATH'] + "_master/" + yaml
+    dc_dest = wd + "/docker-compose.yml"
+    green("Copying {0} to {1} per DOCKER_COMPOSE_FILE setting.".format(dc_source, dc_dest))
+    shutil.copyfile(dc_source, dc_dest)
+  except KeyError:
+    pass
+  except:
+    unexpected()
+    raise
 
   # Use 'docker compose up -d' to build the target stack
   try:
@@ -760,7 +816,7 @@ if __name__ == "__main__":
   parser.add_argument('targets', metavar='target', nargs='+',
     help='Target stacks (app and/or sites) to be processed')
   parser.add_argument('-v', '--verbosity', action='count', help='increase output verbosity (default: OFF)')
-  parser.add_argument('--version', action='version', version=identify)
+  parser.add_argument('--version', action='version', version=identify + " " + extra_info)
   parser.add_argument('-p', action='store_true', help="turns on Portainer inclusion")
   parser.add_argument('-i', action='store_true', help="for ISLE...no network, Traefik or Portainer")
   args = parser.parse_args( )
@@ -785,6 +841,7 @@ if __name__ == "__main__":
   # Provide some feedback to the user
   arg_list = " ".join(sys.argv[1:])
   blue("{0} ({1}) called on {2} with arguments: {3}".format(identify, sys.argv[0], host, arg_list))
+  blue("  port_ability.py {0} and {1}".format(extra_info, master_info))
 
   # Startup and make sure network and Traefik are up and running
   if not args.i:
@@ -834,6 +891,9 @@ if __name__ == "__main__":
 
     if args.action[0] == 'pull-data':
       do_pull_data(target, target_env)
+
+    if args.action[0] == 'push-code':
+      do_push_code(target, target_env)
 
   # All done.  Set working directory back to original.
   os.chdir(cwd)
