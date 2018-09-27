@@ -1,5 +1,5 @@
 # File: traefik.toml.prod.dgdocker1
-# Modified: Sunday, September 16, 2018 1:07 PM
+# Modified: Thursday, September 27, 2018 10:09 AM
 
 defaultEntryPoints = ["http", "https"]
 [web]
@@ -9,8 +9,8 @@ address = ":8080"
 [entryPoints]
   [entryPoints.http]
   address = ":80"
-#    [entryPoints.http.redirect]  # redirection off for Omeka
-#      entryPoint = "https"
+  [entryPoints.http.redirect]  # Comment out this line and the next to turn redirection off for Omeka
+    entryPoint = "https"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
