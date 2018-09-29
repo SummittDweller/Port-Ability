@@ -1,6 +1,12 @@
 # Port-Ability
-Modified: Tuesday, August 16, 2018 10:40 AM
+Modified: Saturday, September 29, 2018 7:54 AM
+
 _Port-Ability_ is a Python 3 script, and associated files, designed to enable a simple, controlled, command-line DEV -> STAGE -> PROD development and deployment workflow for 'Dockerized' application stacks.
+
+## Python 3 Setup
+
+In OSX (High Sierra) following
+https://stackoverflow.com/questions/47255517/brew-install-python3-didnt-install-pip3 to install Python 3.7 via Homebrew.  Install of this in September 2018 required an upgrade to XCode 10.0 and corresponding XCode Commandline Tools.  I used guidance from https://github.com/Homebrew/homebrew-core/issues/31679#issuecomment-423259873 to get it working.
 
 ## Installation
 
@@ -21,4 +27,3 @@ curl https://bootstrap.pypa.io/get-pip.py | python3
 pip install -r requirements.txt
 sudo ln -s ~/Port-Ability/app/port-ability.sh /usr/local/bin/port-ability
 ```
-

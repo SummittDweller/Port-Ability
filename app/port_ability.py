@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #--------------------------------------------------------------------------------------
-# port_ability.py      Modified: Monday, September 3, 2018 8:58 PM
+# port_ability.py      Modified: Saturday, September 29, 2018 7:56 AM
 #
 #
 # If Pythonized...
@@ -34,7 +34,7 @@
 #--------------------------------------------------------------------------------------
 
 #--- Config data here ----------------
-VERSION = "1.7.0"
+VERSION = "1.7.1"
 identify = "Port-Ability v{0}".format(VERSION)
 
 with open('./app/port_ability.py', 'r') as inF:
@@ -358,7 +358,7 @@ def do_pull_data(target, target_env):
     raise
 
   # Build an rsync command to pull the SQL...
-  cmd = "rsync -aruvi {0}@{1}:{2}/{3}/mariadb-init/. {4}/{3}/mariadb-init/ --progress".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
+  cmd = "rsync -aruvi {0}@{1}:{2}/{3}/mariadb-init/. {4}/{3}/mariadb-init/ --exclude=.inactive --progress".format(target_env['PROD_SERVER_USER'], target_env['PROD_SERVER_ADDRESS'], target_env['PROD_SERVER_STACKS'], target, target_env['STACKS'])
   green("Fetching SQL data via: '{0}'".format(cmd))
   try:
     # debug("Command '{0}' is disabled.".format(cmd))
