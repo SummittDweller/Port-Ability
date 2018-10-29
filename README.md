@@ -1,6 +1,6 @@
 # Port-Ability
 
-Modified: Tuesday, August 16, 2018 10:40 AM
+Modified: Monday, October 29, 2018 12:52 PM
 
 _Port-Ability_ is a Python 3 script, and associated files, designed to enable a simple, controlled, command-line DEV -> STAGE -> PROD development and deployment workflow for 'Dockerized' application stacks.
 
@@ -85,6 +85,10 @@ Available actions are:
   - fix-permissions -- @TODO Documentation to be provided.
 
   - pull-data -- @TODO Documentation to be provided.
+
+  - push-code -- @TODO Documentation to be provided.
+
+  - push-data -- @TODO Documentation to be provided.
 
 #### test
 
