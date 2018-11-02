@@ -1,5 +1,5 @@
 # File: traefik.toml.prod.dgdocker1
-# Modified: Sunday, September 16, 2018 1:07 PM
+# Modified: Friday, November 2, 2018 1:12 PM
 
 defaultEntryPoints = ["http", "https"]
 [web]
@@ -21,7 +21,7 @@ entryPoint = "https"
 onHostRule = true
 onDemand = false
 [[acme.domains]]
-  sans = ["traefik.grinnell.edu", "portainer.grinnell.edu", "textline.grinnell.edu", "ohscribe.grinnell.edu", "omeka-wmi.grinnell.edu"]
+  sans = ["shiny.grinnell.edu", "traefik.grinnell.edu", "portainer.grinnell.edu", "textline.grinnell.edu", "ohscribe.grinnell.edu", "omeka-wmi.grinnell.edu"]
 [acme.httpChallenge]
 entryPoint = "http"
 delayBeforeCheck = 0
